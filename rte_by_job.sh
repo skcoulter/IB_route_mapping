@@ -129,7 +129,7 @@ function oparoutes {
 
 	done	
 
-	cat /tmp/switchportall.$$ | sort -u | uniq -c > /tmp/switchports.$$
+	cat /tmp/switchportall.$$ | sort | uniq -c > /tmp/switchports.$$
 }
 
 #### end of functions ####

@@ -1,0 +1,11 @@
+# gnuplot commands to produce graph for switch route map
+TEMPLATE_TITLE
+set style data histogram
+set boxwidth 0.03
+set ylabel "Number of Routes"
+set xlabel "Switch Ports"
+set xtics rotate
+TEMPLATE_XTICS
+set terminal png truecolor small enhanced font 'Helvetica,10'
+TEMPLATE_OUT
+TEMPLATE_PLOT

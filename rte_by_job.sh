@@ -1,22 +1,5 @@
 #!/bin/bash
 
-if [ $# -lt 2 ]
-then 
-        echo " "
-        echo "$0: ERROR: Not enough parameters provided"
-        echo "$0: USAGE: $0 <jobnum> <IB or OPA> [save]"
-        echo "              - the order of the parameters must be accurate"
-        echo "              - the save option will retain working files in /tmp"
-        echo " "
-	exit
-fi    
-
-action="remove"
-if [ $# -eq 3 ]
-then
-	action=$3
-fi
-
 #### functions ####
  
 function ibroutes {
@@ -106,7 +89,7 @@ function oparoutes {
 		opareport -o route -S "node:$src hfi1_0" -D "node:$dst hfi1_0" >> /tmp/rawroutes.$$ 2>/dev/null
 	done
 
-# grok ugly output to get summarized switch port usage
+# grok output to get summarized switch port usage
 
 	cat /tmp/rawroutes.$$ | while read line
 	do
@@ -129,7 +112,7 @@ function oparoutes {
 
 	done	
 
-	cat /tmp/switchportall.$$ | sort | uniq -c > /tmp/switchports.$$
+	cat /tmp/switchportall.$$ | sort -k2 | uniq -c > /tmp/switchports.$$
 }
 
 #### end of functions ####
@@ -175,9 +158,8 @@ done
 # clean up unless otherwise directed
 
 cp /tmp/spine_plotdata.$$ /tmp/routes.job$1
-echo Switch port routes for job $1 can be found in /tmp/routes.job$1
 
-if [ $action == "remove" ]
+if [ $3 == "remove" ]
 then
 	rm /tmp/*.$$
 fi

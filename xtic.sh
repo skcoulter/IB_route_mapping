@@ -1,27 +1,12 @@
 #!/bin/bash
 
-if [ $# -lt 2 ]
-then
-        echo " "
-        echo "$0: ERROR: Not enough parameters provided"
-        echo "$0: USAGE: $0 <filename> <IB or OPA>"
-	echo "              - the order of the parameters must be accurate"
-        echo " "
-        exit
-fi
-
-if [[ $2 -ne "IB" && $2 -ne "OPA" ]]
-then
-        echo "$0: ERROR: Bad transport provided, $2"
-fi
-
 # generate appropriate tics
 
 dev="0"
 tic=0
 echo -n "set xtics (" > /tmp/xtics.$$
 
-cat $1 | while read line
+cat /tmp/routes.job$1 | while read line
 do
         case "$line" in
         *Spine*)
@@ -53,8 +38,14 @@ do
 done
 echo ")" >> /tmp/xtics.$$
 
-fn=`echo $1 | sed 's/.*routes/routes/'`
 fix=`cat /tmp/xtics.$$ | sed 's/,)/)/'`
-echo $fix > /tmp/xtics.$fn
-echo File containing xtics is /tmp/xtics.$fn
+echo $fix > /tmp/xtics.job$1
 
+# clean up unless otherwise directed
+
+if [ $3 == "remove" ]
+then
+        rm /tmp/*.$$
+fi
+
+exit

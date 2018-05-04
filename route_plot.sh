@@ -11,7 +11,7 @@ then
 	echo "              - the --save option will retain working files in /tmp"
 	echo "              - without the --iofile option, the map will show the routes between all the compute nodes allocated to the job"
 	echo "              - with the --iofile option, the map will show the routes between the compute nodes and the nodes listed in the file"
-	echo "              - the --iofile option is meant to contain the lids of IO nodes, but it could be any subset of nodes"
+	echo "              - the --iofile option is meant to contain the lids(IB) or names(OPA) of IO nodes, but it could be any subset of nodes"
         echo " "
         exit
 fi

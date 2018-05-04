@@ -4,44 +4,53 @@
  
 function ibroutes {
 
-for x in $args
-do
-        range="no"
-        if [[ $x == *[-]* ]]
-        then
-                range="yes"
-        fi
-        node=`echo ${x} | sed 's/-/ /'`
+	for x in $args
+	do
+        	range="no"
+        	if [[ $x == *[-]* ]]
+        	then
+                	range="yes"
+        	fi
+        	node=`echo ${x} | sed 's/-/ /'`
 
-        if [ $range == "no" ]
-        then
-                ibnetdiscover -p | grep "^CA" | grep $prefix${node} | awk '{print $2}' >> /tmp/lidlist.$$
-        else
-                for n in `seq -w $node`
-                do
-                        ibnetdiscover -p | grep "^CA" | grep $prefix${n} | awk '{print $2}' >> /tmp/lidlist.$$
-                done
-        fi
-done
+        	if [ $range == "no" ]
+        	then
+                	ibnetdiscover -p | grep "^CA" | grep $prefix${node} | awk '{print $2}' >> /tmp/lidlist.$$
+        	else
+                	for n in `seq -w $node`
+                	do
+                        	ibnetdiscover -p | grep "^CA" | grep $prefix${n} | awk '{print $2}' >> /tmp/lidlist.$$
+                	done
+        	fi
+	done
 
 # create lid pair file for ibtracert
 
-for x in `cat /tmp/lidlist.$$`
-do
-        for y in `cat /tmp/lidlist.$$`
-        do
-                if [ $x != $y ]
-                then
-                        echo $x " " $y >> /tmp/lidpairs.$$
-                fi
-        done
-done
+	if [ $1 == "NOFN" ]
+	then
+		file="/tmp/lidlist.$$"
+	else
+		file="$1"
+	fi
+
+	for x in `cat /tmp/lidlist.$$`
+	do
+        	for y in `cat $file`
+        	do
+                	if [ $x != $y ]
+                	then
+                        	echo $x " " $y >> /tmp/lidpairs.$$
+                	fi
+        	done
+	done
 
 # run ibtracert and format output
+# for now run modified ibtracert at path passed as argument
+#    once patch is released as part of bundled ibtracert, this will not be necessary
 
-/users/markus/git/get_route_as_function/src/ibtracert --ports-file /tmp/lidpairs.$$ >> /tmp/routes.$$ 2>/dev/null
+	$2/ibtracert --ports-file /tmp/lidpairs.$$ >> /tmp/routes.$$ 2>/dev/null
 
-cat /tmp/routes.$$ | grep "switch port" | sed 's/^.* switch port //' | sed 's/\".*//' | sed 's/^.*\[//' | sed 's/\]/ /' | sed 's/ lid.*-//' | sort -k2 | uniq -c > /tmp/switchports.$$
+	cat /tmp/routes.$$ | grep "switch port" | sed 's/^.* switch port //' | sed 's/\".*//' | sed 's/^.*\[//' | sed 's/\]/ /' | sed 's/ lid.*-//' | sort -k2 | uniq -c > /tmp/switchports.$$
 
 }
 
@@ -69,9 +78,16 @@ function oparoutes {
 
 # create node pair file
 
+	if [ $1 == "NOFN" ]
+	then
+        	file="/tmp/nodelist.$$"
+	else
+        	file="$1"
+	fi
+
 	for x in `cat /tmp/nodelist.$$`
 	do
-		for y in `cat /tmp/nodelist.$$`
+		for y in `cat $file`
 		do
 			if [ $x != $y ]
 			then
@@ -129,16 +145,17 @@ nodelist=`sacct -j $1 --format NodeList%200s | grep -m 1 $prefix`
 args=`echo $nodelist | sed 's/.*\[//' | sed 's/\]//' | xargs -d,`
 
 # get routes and create switch port files depending on transport
+# send file name if provided
 
 case "$2" in
 IB)
-	ibroutes
+	ibroutes $5 $3
 ;;
 OPA)
-	oparoutes
+	oparoutes $5
 ;;
 *)
-	echo "$0: ERROR: Bad transport provided, $3"
+	echo "$0: ERROR: Bad transport provided, $2"
 esac
 
 # read in formatted output and create gnu plot data file
@@ -155,11 +172,11 @@ do
         echo "$lid/$port $num" >> /tmp/spine_plotdata.$$
 done
 
-# clean up unless otherwise directed
+# save routes and clean up unless otherwise directed
 
 cp /tmp/spine_plotdata.$$ /tmp/routes.job$1
 
-if [ $3 == "remove" ]
+if [ $4 == "remove" ]
 then
 	rm /tmp/*.$$
 fi
